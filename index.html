@@ -1,39 +1,37 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Monitoramento BPM – ESP32</title>
-
+  <meta charset="UTF-8">
+  <title>Monitor ESP32 – Firebase</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
       background: #111;
       color: #0f0;
+      font-family: Arial;
       text-align: center;
-      padding: 20px;
+      padding-top: 40px;
     }
-
     #bpm {
-      font-size: 4rem;
-      margin-top: 30px;
+      font-size: 60px;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
 
-  <h1>Monitoramento do Sensor Cardíaco – ESP32</h1>
-  <p>BPM atualizado em tempo real pelo Firebase</p>
-
-  <div id="bpm">--</div>
+  <h1>❤️ BPM em Tempo Real</h1>
+  <div id="bpm">Carregando...</div>
 
   <script type="module">
 
-    // Import Firebase SDKs
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+    // === FIREBASE IMPORTS ===
+    import { initializeApp }
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
-    // ---- CONFIGURAÇÃO DO SEU FIREBASE ----
+    import { getDatabase, ref, onValue }
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    // === CONFIGURAÇÃO DO FIREBASE ===
     const firebaseConfig = {
       apiKey: "AIzaSyDXtbDh2q3Vp66GJYm4JWROXzRyG0kUIQ0",
       authDomain: "esp32c6-32158.firebaseapp.com",
@@ -45,19 +43,20 @@
       measurementId: "G-HLVMFD1RQY"
     };
 
-    // Inicializa o app Firebase
+    // === INICIALIZA FIREBASE ===
     const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
+    const db = getDatabase(app);
 
-    // ---- LER O BPM EM TEMPO REAL ----
-    const bpmRef = ref(database, "sensor/bpm");
+    // === REFERÊNCIA ONDE SEU ESP32 SALVA OS BPM ===
+    const bpmRef = ref(db, "sensores/bpm");
 
+    // === ESCUTA EM TEMPO REAL ===
     onValue(bpmRef, (snapshot) => {
-      const valor = snapshot.val();
-      document.getElementById("bpm").innerText = valor ?? "--";
+      const bpm = snapshot.val();
+      document.getElementById("bpm").textContent = bpm ?? "Sem dados";
     });
 
   </script>
-
 </body>
 </html>
+
