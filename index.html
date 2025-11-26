@@ -3,99 +3,106 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Monitor BPM - Firebase</title>
+  <title>Monitoramento de Batimentos - Database</title>
 
   <style>
     body {
-      background: #111;
-      color: #0f0;
-      font-family: Arial;
-      padding: 20px;
+      background: #ffffff;
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      color: #cc0000;
+      font-size: 28px;
+      margin-bottom: 30px;
+      text-align: center;
     }
 
     table {
-      width: 100%;
+      width: 60%;
       border-collapse: collapse;
       margin-top: 20px;
-      background: #222;
+      border: 3px solid #cc0000;
     }
 
     th, td {
-      padding: 10px;
-      border: 1px solid #333;
-      text-align: left;
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+      text-align: center;
     }
 
     th {
-      background: #333;
+      background-color: #cc0000;
+      color: white;
+      font-size: 18px;
+    }
+
+    tr:nth-child(even) {
+      background: #f8f8f8;
+    }
+
+    tr:hover {
+      background: #ffe6e6;
     }
   </style>
 </head>
 <body>
 
-<h1>📡 Monitor de BPM - Firebase</h1>
+<h1>Monitoramento de Batimentos - Database</h1>
 
-<table>
+<table id="bpm-table">
   <thead>
     <tr>
-      <th>ID</th>
       <th>BPM</th>
-      <th>Timestamp</th>
+      <th>Horário</th>
     </tr>
   </thead>
-  <tbody id="tableBody">
+  <tbody id="table-body">
+    <!-- Dados preenchidos pelo Firebase -->
   </tbody>
 </table>
 
 <script type="module">
-  // Import Firebase modules
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
   import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
-  // Firebase config
   const firebaseConfig = {
-    apiKey: "AIzaSyDXtbDh2q3Vp66GJYm4JWROXzRyG0kUIQ0",
-    authDomain: "esp32c6-32158.firebaseapp.com",
-    databaseURL: "https://esp32c6-32158-default-rtdb.firebaseio.com",
-    projectId: "esp32c6-32158",
-    storageBucket: "esp32c6-32158.firebasestorage.app",
-    messagingSenderId: "975962633482",
-    appId: "1:975962633482:web:9fca2d90452fc2cd0bb6f3",
-    measurementId: "G-HLVMFD1RQY"
+    databaseURL: "https://esp32c6-32158-default-rtdb.firebaseio.com"
   };
 
-  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  // Reference to /bpm
   const bpmRef = ref(db, "bpm");
-  const tableBody = document.getElementById("tableBody");
+  const tableBody = document.getElementById("table-body");
 
-  // Listen to real-time updates
+  function formatTime(ms) {
+    const date = new Date(ms);
+    return date.toLocaleString("pt-BR");
+  }
+
   onValue(bpmRef, (snapshot) => {
     const data = snapshot.val();
-    tableBody.innerHTML = ""; // clear table
+    tableBody.innerHTML = "";
 
-    if (!data) {
-      tableBody.innerHTML = `<tr><td colspan="3">Nenhum dado encontrado</td></tr>`;
-      return;
-    }
+    if (!data) return;
 
-    Object.entries(data).forEach(([id, item]) => {
-      const tr = document.createElement("tr");
-
-      tr.innerHTML = `
-        <td>${id}</td>
-        <td>${item.bpm}</td>
-        <td>${item.timestamp}</td>
+    Object.values(data).forEach(item => {
+      const row = `
+        <tr>
+          <td>${item.bpm}</td>
+          <td>${formatTime(item.timestamp)}</td>
+        </tr>
       `;
-
-      tableBody.appendChild(tr);
+      tableBody.innerHTML += row;
     });
   });
 </script>
 
 </body>
 </html>
-
