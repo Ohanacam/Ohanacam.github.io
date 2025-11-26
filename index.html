@@ -1,107 +1,253 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Monitoramento de Batimentos - Database</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Monitoramento de Batimentos</title>
 
   <style>
-    body {
-      background: #ffffff;
-      font-family: Arial, sans-serif;
-      padding: 40px;
+    :root {
+      --accent: #c92a2a; /* vermelho */
+      --bg: #ffffff;
+      --card: #fff;
+      --text: #111;
+      --muted: #666;
+      --table-header: #f8f8f8;
+    }
+
+    html,body {
+      height: 100%;
       margin: 0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .wrap {
+      min-height: 100%;
       display: flex;
-      flex-direction: column;
       align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      box-sizing: border-box;
+    }
+
+    .panel {
+      width: 100%;
+      max-width: 820px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+      padding: 28px;
+      box-sizing: border-box;
+      border: 6px solid var(--accent); /* red border around the panel */
     }
 
     h1 {
-      color: #cc0000;
-      font-size: 28px;
-      margin-bottom: 30px;
+      margin: 0 0 18px 0;
+      font-size: 20px;
+      letter-spacing: 0.2px;
       text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 18px;
+      font-size: 14px;
+    }
+
+    /* table container */
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 6px;
     }
 
     table {
-      width: 60%;
+      width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
-      border: 3px solid #cc0000;
+      background: white;
     }
 
-    th, td {
-      padding: 12px;
-      border-bottom: 1px solid #ddd;
+    thead th {
+      text-align: left;
+      padding: 12px 14px;
+      font-size: 14px;
+      background: var(--table-header);
+      color: var(--text);
+      border-bottom: 1px solid #eee;
+    }
+
+    tbody td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #f1f1f1;
+      font-size: 15px;
+    }
+
+    tbody tr:nth-child(even) td {
+      background: #fcfcfc;
+    }
+
+    .empty {
       text-align: center;
+      color: var(--muted);
+      padding: 24px 12px;
     }
 
-    th {
-      background-color: #cc0000;
-      color: white;
-      font-size: 18px;
-    }
-
-    tr:nth-child(even) {
-      background: #f8f8f8;
-    }
-
-    tr:hover {
-      background: #ffe6e6;
+    /* small screens */
+    @media (max-width: 420px) {
+      .panel { padding: 16px; border-width: 4px; }
+      thead th, tbody td { padding: 10px; font-size: 14px; }
     }
   </style>
 </head>
 <body>
 
-<h1>Monitoramento de Batimentos - Database</h1>
+<div class="wrap">
+  <div class="panel" role="main" aria-labelledby="title">
+    <h1 id="title">Monitoramento de Batimentos</h1>
+    <div class="subtitle">Dados em tempo real — Firebase Realtime Database</div>
 
-<table id="bpm-table">
-  <thead>
-    <tr>
-      <th>BPM</th>
-      <th>Horário</th>
-    </tr>
-  </thead>
-  <tbody id="table-body">
-    <!-- Dados preenchidos pelo Firebase -->
-  </tbody>
-</table>
+    <div class="table-wrap" id="table-wrap">
+      <table id="bpm-table" aria-describedby="title">
+        <thead>
+          <tr>
+            <th>Horário</th>
+            <th>Batimentos (BPM)</th>
+          </tr>
+        </thead>
+        <tbody id="bpm-body">
+          <tr><td colspan="2" class="empty">Carregando dados...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
 <script type="module">
+  // ---------- CONFIG FIREBASE ----------
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
   import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
+  // Substitua pelo seu firebaseConfig (ou mantenha o que o Firebase gerou)
   const firebaseConfig = {
-    databaseURL: "https://esp32c6-32158-default-rtdb.firebaseio.com"
+    apiKey: "AIzaSyDXtbDh2q3Vp66GJYm4JWROXzRyG0kUIQ0",
+    authDomain: "esp32c6-32158.firebaseapp.com",
+    databaseURL: "https://esp32c6-32158-default-rtdb.firebaseio.com",
+    projectId: "esp32c6-32158",
+    storageBucket: "esp32c6-32158.firebasestorage.app",
+    messagingSenderId: "975962633482",
+    appId: "1:975962633482:web:9fca2d90452fc2cd0bb6f3",
+    measurementId: "G-HLVMFD1RQY"
   };
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  const bpmRef = ref(db, "bpm");
-  const tableBody = document.getElementById("table-body");
+  // ---------- REFERÊNCIA: tente 'bpm' primeiro; se não houver, observe a raiz ----------
+  const candidatePaths = [
+    "bpm",
+    "/",          // raiz (para estruturas diferentes)
+  ];
 
-  function formatTime(ms) {
-    const date = new Date(ms);
-    return date.toLocaleString("pt-BR");
+  const tableBody = document.getElementById("bpm-body");
+
+  // Util: percorre objeto e coleta entradas com campo 'bpm' ou valores numéricos diretos
+  function collectBpmEntries(obj, out) {
+    if (!obj || typeof obj !== 'object') return;
+    for (const k of Object.keys(obj)) {
+      const v = obj[k];
+      if (v && typeof v === 'object') {
+        // se tiver campo 'bpm'
+        if (v.hasOwnProperty('bpm')) {
+          out.push({ bpm: v.bpm, ts: v.timestamp ?? v.time ?? v.createdAt ?? k });
+        } else {
+          // recursão
+          collectBpmEntries(v, out);
+        }
+      } else {
+        // se for primitivo e key indicar batimento
+        if (k.toLowerCase().includes('bpm') && (typeof v === "number" || !isNaN(Number(v)))) {
+          out.push({ bpm: Number(v), ts: null });
+        }
+      }
+    }
   }
 
-  onValue(bpmRef, (snapshot) => {
-    const data = snapshot.val();
-    tableBody.innerHTML = "";
+  // Formata timestamp (se for número assume ms ou s)
+  function formatTimestamp(ts) {
+    if (!ts) return "-";
+    // se for string que parece número
+    if (typeof ts === 'string' && /^\d+$/.test(ts)) ts = Number(ts);
+    // se for número pequeno (como seconds) multiplica por 1000
+    if (typeof ts === 'number') {
+      if (ts < 1e11) ts = ts * 1000; // assume seconds -> ms
+      const d = new Date(ts);
+      if (!isNaN(d)) return d.toLocaleString();
+    }
+    // se for string legível
+    return String(ts);
+  }
 
-    if (!data) return;
-
-    Object.values(data).forEach(item => {
-      const row = `
-        <tr>
-          <td>${item.bpm}</td>
-          <td>${formatTime(item.timestamp)}</td>
-        </tr>
-      `;
-      tableBody.innerHTML += row;
+  // Atualiza a tabela com um array de entradas {bpm, ts}
+  function renderTable(entries) {
+    // ordenar por timestamp decrescente (mais recente primeiro) quando possível
+    entries.sort((a,b) => {
+      const ta = a.ts ? Number(a.ts) : 0;
+      const tb = b.ts ? Number(b.ts) : 0;
+      return (tb - ta);
     });
-  });
+
+    tableBody.innerHTML = "";
+    if (!entries.length) {
+      tableBody.innerHTML = '<tr><td colspan="2" class="empty">Nenhum dado encontrado.</td></tr>';
+      return;
+    }
+
+    // monta linhas
+    for (const e of entries) {
+      const tr = document.createElement("tr");
+      const tdTime = document.createElement("td");
+      const tdBpm  = document.createElement("td");
+
+      tdTime.textContent = formatTimestamp(e.ts);
+      tdBpm.textContent  = e.bpm;
+
+      tr.appendChild(tdTime);
+      tr.appendChild(tdBpm);
+      tableBody.appendChild(tr);
+    }
+  }
+
+  // Tenta ouvir um caminho; se não houver dados tenta próximo
+  async function startListening() {
+    // primeiro tenta "bpm"
+    const mainRef = ref(db, "bpm");
+    onValue(mainRef, (snap) => {
+      const val = snap.val();
+      if (val) {
+        // coleta entradas de bpm do nó 'bpm'
+        const entries = [];
+        collectBpmEntries(val, entries);
+        renderTable(entries);
+      } else {
+        // se nó vazio, então escuta a raiz e tenta encontrar dados em subnós
+        const rootRef = ref(db, "/");
+        onValue(rootRef, (rootSnap) => {
+          const rootVal = rootSnap.val();
+          const entries = [];
+          collectBpmEntries(rootVal, entries);
+          renderTable(entries);
+        }, (err) => {
+          tableBody.innerHTML = '<tr><td colspan="2" class="empty">Erro ao ler banco: ' + err + '</td></tr>';
+        });
+      }
+    }, (error) => {
+      tableBody.innerHTML = '<tr><td colspan="2" class="empty">Erro de leitura: ' + error + '</td></tr>';
+    });
+  }
+
+  startListening();
 </script>
 
 </body>
