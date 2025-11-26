@@ -1,230 +1,112 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Monitoramento de Batimentos</title>
 
   <style>
-    :root{
-      --bg: #f5f5f6;
-      --card-bg: #ffffff;
-      --accent: #e22;
-      --text: #111;
-      --muted: #666;
-      --table-header-bg: #ffeaea;
-    }
-
-    html,body{
-      height: 100%;
-      margin: 0;
-      font-family: "Inter", "Segoe UI", Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
-
-    .wrap {
-      min-height: 100%;
+    body {
+      background: #ffffff;
+      font-family: Arial, sans-serif;
       display: flex;
-      align-items: center;
       justify-content: center;
-      padding: 40px 20px;
-      box-sizing: border-box;
+      padding-top: 40px;
     }
 
-    .panel {
-      width: 920px;
-      max-width: calc(100% - 40px);
-      background: var(--card-bg);
-      border: 6px solid var(--accent);
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-      padding: 24px;
+    .container {
+      width: 90%;
+      max-width: 600px;
+      text-align: center;
     }
 
     h1 {
-      margin: 0 0 8px 0;
-      font-size: 20px;
-      letter-spacing: 0.2px;
-    }
-
-    p.subtitle {
-      margin: 0 0 18px 0;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .table-wrap {
-      overflow-x: auto;
-      margin-top: 12px;
+      color: #b30000;
+      margin-bottom: 20px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 16px;
+      margin-top: 10px;
+      border: 3px solid #b30000;
     }
 
-    thead th {
-      text-align: left;
-      padding: 12px 14px;
-      background: var(--table-header-bg);
-      font-weight: 600;
-      color: #000;
-      border-bottom: 1px solid rgba(0,0,0,0.06);
+    th, td {
+      padding: 12px;
+      border: 1px solid #b30000;
+      font-size: 18px;
     }
 
-    tbody td {
-      padding: 12px 14px;
-      border-bottom: 1px dashed rgba(0,0,0,0.06);
+    th {
+      background: #ffe5e5;
+      color: #b30000;
     }
 
-    tbody tr:nth-child(even) {
-      background: #fff7f7;
-    }
-
-    .empty {
-      text-align: center;
-      padding: 30px;
-      color: var(--muted);
-    }
-
-    .loader {
-      display:inline-block;
-      width:18px;
-      height:18px;
-      border-radius:50%;
-      border:3px solid #eee;
-      border-top-color: var(--accent);
-      animation: spin 1s linear infinite;
-      vertical-align: middle;
-      margin-right:8px;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg) } }
-
-    @media (max-width:520px){
-      h1{ font-size:18px }
-      table { font-size:14px }
+    tr:nth-child(even) {
+      background: #fff5f5;
     }
   </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <div class="panel">
-      <h1>Monitoramento de Batimentos — Database</h1>
-      <p class="subtitle">Dados em tempo real vindo do Firebase Realtime Database</p>
 
-      <div id="status" class="status"><span class="loader"></span>Conectando ao Firebase...</div>
+<div class="container">
+  <h1>Monitoramento de Batimentos</h1>
 
-      <div class="table-wrap" id="tableWrap" style="margin-top:16px;">
-
-      </div>
-    </div>
-  </div>
-
-  <script type="module">
-
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+  <table>
+    <thead>
+      <tr>
+        <th>Batimentos (BPM)</th>
+      </tr>
+    </thead>
+    <tbody id="tabela-bpm">
+      <tr><td>Carregando...</td></tr>
+    </tbody>
+  </table>
+</div>
 
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDXtbDh2q3Vp66GJYm4JWROXzRyG0kUIQ0",
-      authDomain: "esp32c6-32158.firebaseapp.com",
-      databaseURL: "https://esp32c6-32158-default-rtdb.firebaseio.com",
-      projectId: "esp32c6-32158",
-      storageBucket: "esp32c6-32158.firebasestorage.app",
-      messagingSenderId: "975962633482",
-      appId: "1:975962633482:web:9fca2d90452fc2cd0bb6f3",
-      measurementId: "G-HLVMFD1RQY"
-    };
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
-    // ---------- INICIALIZA -------------
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+  const firebaseConfig = {
+    apiKey: "AIzaSyDXtbDh2q3Vp66GJYm4JWROXzRyG0kUIQ0",
+    authDomain: "esp32c6-32158.firebaseapp.com",
+    databaseURL: "https://esp32c6-32158-default-rtdb.firebaseio.com",
+    projectId: "esp32c6-32158",
+    storageBucket: "esp32c6-32158.firebasestorage.app",
+    messagingSenderId: "975962633482",
+    appId: "1:975962633482:web:9fca2d90452fc2cd0bb6f3",
+    measurementId: "G-HLVMFD1RQY"
+  };
 
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-    const PATH = "bpm";
+  const bpmRef = ref(db, "bpm");
 
-    const statusEl = document.getElementById('status');
-    const tableWrap = document.getElementById('tableWrap');
+  const tabela = document.getElementById("tabela-bpm");
 
-    function formatTimestamp(ts){
-      if (ts == null) return "—";
-      if (typeof ts === "string" && /^\d+$/.test(ts)) ts = Number(ts);
-      if (typeof ts === "number") {
-        if (ts < 1e11) ts = ts * 1000;
-        try {
-          const d = new Date(ts);
-          if (isNaN(d.getTime())) return "—";
-          return d.toLocaleString('pt-BR');
-        } catch(e){
-          return "—";
-        }
-      }
-      return String(ts);
+  onValue(bpmRef, (snapshot) => {
+    const data = snapshot.val();
+    tabela.innerHTML = "";
+
+    if (!data) {
+      tabela.innerHTML = "<tr><td>Nenhum dado encontrado</td></tr>";
+      return;
     }
 
-    function buildTable(items) {
-      if (!items || items.length === 0) {
-        return `<div class="empty">Nenhum dado encontrado.</div>`;
-      }
+    Object.values(data).forEach((item) => {
+      tabela.innerHTML += `
+        <tr>
+          <td>${item.bpm}</td>
+        </tr>
+      `;
+    });
+  });
+</script>
 
-      let html = `<table aria-label="Tabela de BPM"><thead><tr><th>Batimentos (BPM)</th><th>Data / Hora</th></tr></thead><tbody>`;
-      for (const it of items) {
-        html += `<tr><td>${it.bpm ?? '—'}</td><td>${formatTimestamp(it.timestamp)}</td></tr>`;
-      }
-      html += `</tbody></table>`;
-      return html;
-    }
-
-    // escuta o nó no RTDB
-    try {
-      const bpmRef = ref(db, PATH);
-      onValue(bpmRef, (snapshot) => {
-        const data = snapshot.val();
-        // Atualiza status
-        statusEl.innerHTML = "Dados conectados. Atualizando tabela...";
-
-
-        const items = [];
-        if (data && typeof data === 'object') {
-
-          Object.keys(data).forEach(key => {
-            const node = data[key];
-
-            let record = {};
-            if (typeof node === 'number' || typeof node === 'string') {
-              record.bpm = node;
-              record.timestamp = null;
-            } else if (node && typeof node === 'object') {
-              record.bpm = node.bpm ?? node.value ?? node.val ?? null;
-              record.timestamp = node.timestamp ?? node.ts ?? node.time ?? node.date ?? node.createdAt ?? null;
-            } else {
-              record.bpm = null;
-              record.timestamp = null;
-            }
-            items.push(record);
-          });
-        }
-
-
-        items.sort((a,b) => {
-          const ta = a.timestamp || 0;
-          const tb = b.timestamp || 0;
-          const na = (typeof ta === 'string' && /^\d+$/.test(ta)) ? Number(ta) : ta;
-          const nb = (typeof tb === 'string' && /^\d+$/.test(tb)) ? Number(tb) : tb;
-          return (na || 0) - (nb || 0);
-        });
-
-        tableWrap.innerHTML = buildTable(items);
-      }, (err) => {
-        statusEl.innerHTML = `Erro ao ler Firebase: ${err && err.message ? err.message : err}`;
-      });
-    } catch (err) {
-      statusEl.innerHTML = `Erro inicializando Firebase: ${err.message || err}`;
-    }
-  </script>
 </body>
 </html>
